@@ -3,8 +3,7 @@
 	<!-- Example finding 3D poses of the objects detected -->
 	<!-- $roslaunch openni_launch openni.launch depth_registration:=true -->
 	<arg name="3d_sensor" default="$(env TURTLEBOT_3D_SENSOR)" />
-	<arg if="$(eval arg('3d_sensor') != 'zr300')" name="depth" value="depth_registered"/>
-	<arg if="$(eval arg('3d_sensor') == 'zr300')" name="depth" value="depth"/>
+	<arg name="depth" value="depth_registered"/>
 	
 	<node name="find_object_3d" pkg="find_object_2d" type="find_object_2d" output="screen">
 		<param name="gui" value="false" type="bool"/>
