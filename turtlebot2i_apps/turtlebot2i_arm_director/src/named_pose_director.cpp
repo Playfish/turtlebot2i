@@ -2,7 +2,7 @@
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 
-#include <moveit/move_group_interface/move_group_interface.h>
+#include <moveit/move_group_interface/move_group.h>
 
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <geometric_shapes/solid_primitive_dims.h>
@@ -28,7 +28,7 @@ private:
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface_;
 
   // Move group to control arm with MoveIt!
-  moveit::planning_interface::MoveGroupInterface arm_;
+  moveit::planning_interface::MoveGroup arm_;
 
   std::string action_server_name_;
 

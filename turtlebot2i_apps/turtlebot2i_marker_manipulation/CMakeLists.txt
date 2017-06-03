@@ -13,7 +13,7 @@ include_directories(include
                     ${PCL_INCLUDE_DIRS}
                    )
 
-add_message_files(FILES BlockPose.msg BlockPoseArray.msg)
+add_message_files(FILES BlockPose.msg BlockPoseArray.msg) 
 
 add_action_files(FILES
                  ToolDetection.action

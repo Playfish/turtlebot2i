@@ -1,0 +1,22 @@
+<package>
+  <name>turtlebot2i_apps</name>
+  <version>0.1.0</version>
+  <description>
+      turtlebot2i_apps is a group of simple demos and exmaples to run on your TurtleBot2i to help you get started with ROS and TurtleBot2i.
+  </description>
+
+  <maintainer email="1271087623@qq.com">Carl</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>turtlebot2i_arm_director</run_depend>
+  <run_depend>turtlebot2i_block_manipulation</run_depend>
+  <run_depend>turtlebot2i_marker_manipulation</run_depend>
+  <run_depend>turtlebot2i_zoning_demo</run_depend>
+
+  <export>
+    <metapackage/> 
+  </export>
+</package>

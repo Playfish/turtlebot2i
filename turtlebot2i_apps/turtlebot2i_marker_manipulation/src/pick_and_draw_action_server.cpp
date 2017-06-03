@@ -34,7 +34,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <turtlebot2i_marker_manipulation/PickAndDrawAction.h>
 
-#include <moveit/move_group_interface/move_group_interface.h>
+#include <moveit/move_group_interface/move_group.h>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <geometric_shapes/solid_primitive_dims.h>
 
@@ -59,8 +59,8 @@ private:
   ros::Subscriber pick_and_draw_sub_;
 
   // Move groups to control arm and gripper with MoveIt!
-  moveit::planning_interface::MoveGroupInterface arm_;
-  moveit::planning_interface::MoveGroupInterface gripper_;
+  moveit::planning_interface::MoveGroup arm_;
+  moveit::planning_interface::MoveGroup gripper_;
 
   // Parameters from goal
   std::string arm_link_;
@@ -226,7 +226,7 @@ public:
       return ee_point_goal;
     }
 
-    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    moveit::planning_interface::MoveGroup::Plan my_plan;
     my_plan.trajectory_ = trajectory;
     moveit::planning_interface::MoveItErrorCode result = arm_.execute(my_plan);
     if (bool(result) == false)
