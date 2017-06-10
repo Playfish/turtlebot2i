@@ -214,7 +214,8 @@
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <cylinder length="0.006" radius="0.170"/>
+          <mesh filename="package://turtlebot2i_description/meshes/stacks/interbotix/TurtleBot2i_BottomPlate.stl"/>
+          <!--<cylinder length="0.006" radius="0.170"/-->
         </geometry>
       </collision>
       <inertial>
@@ -257,6 +258,7 @@
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
         <geometry>
           <mesh filename="package://turtlebot2i_description/meshes/stacks/interbotix/TurtleBot2i_MiddlePlate.stl"/>
+          <!--<cylinder length="0.006" radius="0.170"/>-->
         </geometry>
       </collision>
       <inertial>
@@ -295,6 +297,7 @@
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
         <geometry>
           <mesh filename="package://turtlebot2i_description/meshes/stacks/interbotix/TurtleBot2i_CameraPlate.stl"/>
+          <!--<cylinder length="0.006" radius="0.170"/>-->
         </geometry>
       </collision>
       <inertial>
@@ -333,6 +336,7 @@
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
         <geometry>
           <mesh filename="package://turtlebot2i_description/meshes/stacks/interbotix/TurtleBot2i_UtilityPlate.stl"/>
+          <!--<cylinder length="0.006" radius="0.170"/>-->
         </geometry>
       </collision>
       <inertial>
@@ -368,9 +372,10 @@
         <xacro:insert_block name="material_near_black"/>
       </visual>  
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry>
           <mesh filename="package://turtlebot2i_description/meshes/stacks/interbotix/TurtleBot2i_TopPlate.stl"/>
+        <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+        <geometry>
+          <cylinder length="0.006" radius="0.170"/>
         </geometry>
       </collision>
       <inertial>

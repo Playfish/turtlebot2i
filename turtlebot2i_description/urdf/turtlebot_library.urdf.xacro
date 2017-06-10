@@ -16,5 +16,8 @@
   <xacro:include filename="$(find turtlebot2i_description)/urdf/sensors/zr300.urdf.xacro"/>
   <!-- Arms -->
   <xacro:include filename="$(find turtlebot2i_description)/urdf/arms/phantomx_pincher_arm.urdf.xacro"/>
+  <!-- Gazebo controller -->
+  <xacro:include filename="$(find turtlebot2i_description)/urdf/gazebo_controller.urdf.xacro"/>
+
   
 </robot>
