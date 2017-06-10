@@ -1,5 +1,5 @@
 controller_list:
-  - name: arm_controller
+  - name: turtlebot/arm_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
     default: true
@@ -9,10 +9,10 @@ controller_list:
       - arm_forearm_joint
       - arm_wrist_flex_joint
       - gripper_link_joint
-  - name: gripper_controller
-    action_ns: gripper_action
-    type: GripperCommand
+  - name: turtlebot/gripper_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
     default: true
-    command_joint: gripper_joint
     joints:
       - gripper_joint
+      - gripper2_joint
