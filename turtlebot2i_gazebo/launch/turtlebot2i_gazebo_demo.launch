@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="auto_sort" default="false" />
+  <include file="$(find turtlebot2i_zoning_demo)/launch/zone_detection_node.launch" />
+  <include file="$(find turtlebot2i_zoning_demo)/launch/zone_destination_node.launch" />
+  <include file="$(find turtlebot2i_block_manipulation)/launch/block_sorting_demo.launch" >
+    <arg name="auto_sort" value="$(arg auto_sort)"/>
+  </include>
+
+</launch>

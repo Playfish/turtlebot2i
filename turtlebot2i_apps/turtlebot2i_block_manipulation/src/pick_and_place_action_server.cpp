@@ -89,13 +89,17 @@ public:
     z_up = goal_->z_up;
 
     arm_.setPoseReferenceFrame(arm_link);
+    gripper_.setPoseReferenceFrame(arm_link);
 
     // Allow some leeway in position (meters) and orientation (radians)
     arm_.setGoalPositionTolerance(0.001);
     arm_.setGoalOrientationTolerance(0.1);
+    gripper_.setGoalPositionTolerance(0.001);
+    gripper_.setGoalOrientationTolerance(0.1);
 
     // Allow replanning to increase the odds of a solution
     arm_.allowReplanning(true);
+    gripper_.allowReplanning(true);
 
     if (goal_->topic.length() < 1)
     {
@@ -130,43 +134,51 @@ public:
     /* open gripper */
     if (setGripper(gripper_open) == false)
       return;
-
+    ROS_INFO("Finish open gripper.");
     /* hover over */
     target = start_pose;
     target.position.z = z_up;
     if (moveArmTo(target) == false)
       return;
+    ROS_INFO("Finish hover over.");
 
     /* go down */
     target.position.z = start_pose.position.z - 0.01; //TODO: subtracting 10mm to grab block closer to base
     if (moveArmTo(target) == false)
       return;
+    ROS_INFO("Finish go down.");
 
     /* close gripper */
     if (setGripper(gripper_closed) == false)
+//    if (setGripperOpen(gripper_closed) == false)
       return;
+    ROS_INFO("Finish gripper close.");
     ros::Duration(0.8).sleep(); // ensure that gripper properly grasp the cube before lifting the arm
 
     /* go up */
     target.position.z = z_up;
     if (moveArmTo(target) == false)
       return;
+    ROS_INFO("Finish go up.");
 
     /* hover over */
     target = end_pose;
     target.position.z = z_up;
     if (moveArmTo(target) == false)
       return;
+    ROS_INFO("Finish hover over.");
 
     /* go down */
     target.position.z = end_pose.position.z;
     if (moveArmTo(target) == false)
       return;
+    ROS_INFO("Finish go down.");
 
     /* open gripper */
     if (setGripper(gripper_open) == false)
       return;
     ros::Duration(0.6).sleep(); // ensure that gripper properly release the cube before lifting the arm
+    ROS_INFO("Finish open gripper.");
 
     /* go up */
     target.position.z = z_up;
@@ -224,7 +236,7 @@ private:
     {
       geometry_msgs::PoseStamped modiff_target;
       modiff_target.header.frame_id = arm_link;
-      modiff_target.pose = target;
+      modiff_target.pose = target; 
 
       double x = modiff_target.pose.position.x;
       double y = modiff_target.pose.position.y;
@@ -254,7 +266,7 @@ private:
 
       ROS_DEBUG("Set pose target [%.2f, %.2f, %.2f] [d: %.2f, p: %.2f, y: %.2f]", x, y, z, d, rp, ry);
       target_pose_pub_.publish(modiff_target);
-
+      arm_.setStartStateToCurrentState();
       if (arm_.setPoseTarget(modiff_target) == false)
       {
         ROS_ERROR("Set pose target [%.2f, %.2f, %.2f, %.2f] failed",
@@ -263,16 +275,26 @@ private:
         as_.setAborted(result_);
         return false;
       }
+      
+      ROS_INFO("Move to pose target [%.2f, %.2f, %.2f, %.2f].",
+                modiff_target.pose.position.x, modiff_target.pose.position.y, modiff_target.pose.position.z,
+                tf::getYaw(modiff_target.pose.orientation));
 
-      moveit::planning_interface::MoveItErrorCode result = arm_.move();
-      if (bool(result) == true)
+      moveit::planning_interface::MoveGroup::Plan my_plan;
+      moveit::planning_interface::MoveItErrorCode success = arm_.plan(my_plan);
+
+      ROS_INFO("Control arm (joint space goal) %s",success?"SUCCESS":"FAILED");
+      arm_.execute(my_plan);
+      if(bool(success) ==true)
+      //moveit::planning_interface::MoveItErrorCode result = arm_.move();
+//      if (bool(result) == true)
       {
         return true;
       }
       else
       {
         ROS_ERROR("[pick and place] Move to target failed (error %d) at attempt %d",
-                  result.val, attempts + 1);
+                  success.val, attempts + 1);
       }
       attempts++;
     }
@@ -282,6 +304,57 @@ private:
     return false;
   }
 
+ /**
+   * Set gripper opening, with follow_joint_trajectory same as arm.
+   * @param opening Physical opening of the gripper, pose
+   * @return True of success, false otherwise
+   */
+  bool setGripperOpen(double opening)
+  {    
+    int attempts = 0;
+    ROS_DEBUG("[pick and place] Set gripper opening to %f", opening);
+    std::map<std::string, double> target_pose;
+    target_pose.insert(std::map<std::string, double>::value_type("gripper_joint",opening/2));
+    target_pose.insert(std::map<std::string, double>::value_type("gripper2_joint",-opening/2));
+
+    robot_state::RobotStatePtr current_State = gripper_.getCurrentState();
+    while(ros::ok())
+    {
+      
+      gripper_.setStartStateToCurrentState();
+
+      if ((gripper_.setJointValueTarget(target_pose) == false) )
+      {
+        ROS_ERROR("[pick and place] Set gripper opening to %f failed", opening);
+        return false;
+      }
+
+      moveit::planning_interface::MoveGroup::Plan my_plan;
+      moveit::planning_interface::MoveItErrorCode success = gripper_.plan(my_plan);
+      //moveit::planning_interface::MoveItErrorCode result = gripper_.move();
+      gripper_.execute(my_plan);
+
+      current_State = gripper_.getCurrentState();
+      ROS_INFO_STREAM("gripper_joint posistion: "<<(current_State->getVariablePosition("gripper_joint"))<<", gripper2_joint posistion: "<<(current_State->getVariablePosition("gripper2_joint"))<<", with opening: "<<opening<<" .");
+
+      if( ( abs( abs(current_State->getVariablePosition("gripper_joint")) - (opening/2) ) < 0.015 ) && 
+          ( abs( abs(current_State->getVariablePosition("gripper2_joint")) - (opening/2) ) < 0.015 ) )
+      {
+  
+        if (bool(success) == true)
+        {
+          return true;
+        }
+        else
+        {
+          ROS_ERROR("[pick and place] Set gripper opening failed (error %d)", success.val);
+          as_.setAborted(result_);
+          return false;
+        }
+      }
+    }
+  }
+
   /**
    * Set gripper opening.
    * @param opening Physical opening of the gripper, in meters
@@ -289,23 +362,44 @@ private:
    */
   bool setGripper(float opening)
   {
+    //double lim_opening_max = 0.032;
+    //double lim_opening_min = 0.002;
+    //if(abs(opening)>0.032) opening = lim_opening_max;
+    //if(abs(opening)<0.002) opening = lim_opening_min;
     ROS_DEBUG("[pick and place] Set gripper opening to %f", opening);
-    if (gripper_.setJointValueTarget("gripper_joint", opening) == false)
+    robot_state::RobotStatePtr current_State = gripper_.getCurrentState();
+    while(ros::ok())
     {
-      ROS_ERROR("[pick and place] Set gripper opening to %f failed", opening);
-      return false;
-    }
+      
+      gripper_.setStartStateToCurrentState();
+      if ((gripper_.setJointValueTarget("gripper_joint", (opening)) == false) )//|| (gripper_.setJointValueTarget("gripper2_joint", (0))== false) )
+      {
+        ROS_ERROR("[pick and place] Set gripper opening to %f failed", opening);
+        return false;
+      }
+      moveit::planning_interface::MoveGroup::Plan my_plan;
+      moveit::planning_interface::MoveItErrorCode success = gripper_.plan(my_plan);
+      //moveit::planning_interface::MoveItErrorCode result = gripper_.move();
+      gripper_.execute(my_plan);
 
-    moveit::planning_interface::MoveItErrorCode result = gripper_.move();
-    if (bool(result) == true)
-    {
-      return true;
-    }
-    else
-    {
-      ROS_ERROR("[pick and place] Set gripper opening failed (error %d)", result.val);
-      as_.setAborted(result_);
-      return false;
+      current_State = gripper_.getCurrentState();
+//      if((abs( (current_State->getVariablePosition("gripper_joint")) - (current_State->getVariablePosition("gripper2_joint")) ) - opening) < 0.002 )//&& 
+      //   ((current_State->getVariablePosition("gripper_joint")) + (current_State->getVariablePosition("gripper2_joint")) < 0.005) )
+      {
+//        ROS_INFO_STREAM("gripper_joint posistion: "<<(current_State->getVariablePosition("gripper_joint"))<<", gripper2_joint posistion: "<<(current_State->getVariablePosition("gripper2_joint"))<<", with opening: "<<opening<<" .");
+        ROS_INFO("Control gripper (joint space goal) %s",success?"SUCCESS":"FAILED");
+        //if (bool(result) == true)
+        if (bool(success) == true)
+        {
+          return true;
+        }
+        else
+        {
+          ROS_ERROR("[pick and place] Set gripper opening failed (error %d)", success.val);
+          as_.setAborted(result_);
+          return false;
+        }
+      }
     }
   }
 

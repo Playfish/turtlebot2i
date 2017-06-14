@@ -12,6 +12,7 @@ class ZoneDetector
 {
 private:
   ros::NodeHandle node_;
+  ros::NodeHandle private_node_;
 
   tf::TransformBroadcaster tf_broadcaster_;
   tf::StampedTransform tf_to_publish_;
@@ -29,8 +30,10 @@ private:
 
   double zone_offset_x_;
 
+  std::string global_frame_id_;
+
 public:
-  ZoneDetector()
+  ZoneDetector(ros::NodeHandle node, ros::NodeHandle private_nh):node_(node), private_node_(private_nh),zone_offset_x_(0.5),global_frame_id_(std::string("map"))
   {
     addMarker( &zone_rviz_markers_, 0, 1.0, 0.0, 0.0 );
     addMarker( &zone_rviz_markers_, 1, 0.0, 1.0, 0.0 );
@@ -43,7 +46,9 @@ public:
     vis_pub_ = node_.advertise<visualization_msgs::MarkerArray>( "zone_visualization_marker", 0 );
 
     //Load parameters
-    node_.param<double>("zone_offset_x", zone_offset_x_, 0.5);
+    private_node_.param<double>("zone_offset_x", zone_offset_x_, 0.5);
+    private_node_.param<std::string>("global_frame_id", global_frame_id_, std::string("map"));
+    ROS_INFO_STREAM("Initialize zone_offset_x : "<<zone_offset_x_<<", global_frame_id : "<<global_frame_id_<<" .");
   }
 
   void lookupZones()
@@ -58,7 +63,7 @@ public:
     
     try
     {
-      listener_.lookupTransform("/map", "/object_1", ros::Time(0), transform);
+      listener_.lookupTransform(global_frame_id_, "/object_1", ros::Time(0), transform);
       double angle = transform.getRotation().getAngle(); 
       transform *= displace_transform; //Displace charging destination and marker
 
@@ -85,7 +90,7 @@ public:
     }
     try
     {
-      listener_.lookupTransform("/map", "/object_2", ros::Time(0), transform);
+      listener_.lookupTransform(global_frame_id_, "/object_2", ros::Time(0), transform);
       double angle = transform.getRotation().getAngle();
       transform *= displace_transform;
 
@@ -112,7 +117,7 @@ public:
     }
     try
     {
-      listener_.lookupTransform("/map", "/object_3", ros::Time(0), transform);
+      listener_.lookupTransform(global_frame_id_, "/object_3", ros::Time(0), transform);
       double angle = transform.getRotation().getAngle();
       transform *= displace_transform;
 
@@ -144,7 +149,7 @@ public:
     }
     else
     {
-      tf_broadcaster_.sendTransform(tf::StampedTransform(zone_transforms_[0], ros::Time::now(), "map", "charging_zone"));
+      tf_broadcaster_.sendTransform(tf::StampedTransform(zone_transforms_[0], ros::Time::now(), global_frame_id_, "charging_zone"));
       ROS_INFO_STREAM_THROTTLE( 5, "Charging Area X " << destination_position_[0].x() << " Y " << destination_position_[0].y() << " Z " << destination_position_[0].z() );
     } 
 
@@ -154,7 +159,7 @@ public:
     }
     else 
     {
-      tf_broadcaster_.sendTransform(tf::StampedTransform(zone_transforms_[1], ros::Time::now(), "map", "pickup_zone"));
+      tf_broadcaster_.sendTransform(tf::StampedTransform(zone_transforms_[1], ros::Time::now(), global_frame_id_, "pickup_zone"));
       ROS_INFO_STREAM_THROTTLE( 5, "Pickup Area X " << destination_position_[1].x() << " Y " << destination_position_[1].y() << " Z " << destination_position_[1].z() );
     }
     if ( destination_position_[2].z() == 0.0 )
@@ -163,7 +168,7 @@ public:
     }
     else
     {
-      tf_broadcaster_.sendTransform(tf::StampedTransform(zone_transforms_[2], ros::Time::now(), "map", "sorting_zone"));
+      tf_broadcaster_.sendTransform(tf::StampedTransform(zone_transforms_[2], ros::Time::now(), global_frame_id_, "sorting_zone"));
       ROS_INFO_STREAM_THROTTLE( 5, "Sorting Area X " << destination_position_[2].x() << " Y " << destination_position_[2].y() << " Z " << destination_position_[2].z() );
     }
 
@@ -175,7 +180,7 @@ private:
   void addMarker( visualization_msgs::MarkerArray * p_array, int id, double red, double green, double blue )
   {
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "map";
+    marker.header.frame_id = global_frame_id_;
     marker.header.stamp = ros::Time();
     marker.ns = "turtlebot_zones";
     marker.id = id;
@@ -206,7 +211,8 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "zone_detection_node");
 
-  zone_detection_node::ZoneDetector zone_detector;
+  ros::NodeHandle nh, private_nh("~");
+  zone_detection_node::ZoneDetector zone_detector(nh,private_nh);
 
   ros::Rate rate(5.0);
   while (ros::ok())

@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="robot" default="turtlebot2i"/>
+
+  <arg name="group"        default="main_eef"/>
+  <arg name="end_effector" default="main_eef"/>
+
+  <node pkg="moveit_simple_grasps" type="moveit_simple_grasps_server" name="moveit_simple_grasps_server">
+    <param name="group"        value="$(arg group)"/>
+    <param name="end_effector" value="$(arg end_effector)"/>
+
+    <rosparam command="load" file="$(find turtlebot2i_block_manipulation)/config/$(arg robot)_arm_grasp_data.yaml"/>
+
+  </node>
+</launch>

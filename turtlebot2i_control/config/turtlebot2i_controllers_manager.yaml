@@ -13,16 +13,28 @@ turtlebot:
       arm_forearm_joint: {p: 2.5, i: 0.0, d: 0.05}
       arm_wrist_flex_joint: {p: 2.5, i: 0.0, d: 0.05}
       gripper_link_joint: {p: 2.5, i: 0.0, d: 0.05}
+#  gripper_controller:
+#    # Unfortunately this controller type works only for grippers with a single joint :( 
+#    #type: "effort_controllers/GripperActionController"
+#    type: "effort_controllers/JointTrajectoryController"
+#    joints: 
+#      - gripper_joint
+#      - gripper2_joint
+#    gains: 
+#      gripper_joint: {p: 2.5, i: 0.0, d: 0.05}
+#      gripper2_joint: {p: 2.5, i: 0.0, d: 0.05}
+
+# verion GripperCommand
   gripper_controller:
     # Unfortunately this controller type works only for grippers with a single joint :( 
-    #type: "effort_controllers/GripperActionController"
-    type: "effort_controllers/JointTrajectoryController"
-    joints: 
-      - gripper_joint
-      - gripper2_joint
+    type: "effort_controllers/GripperActionController"
+    #type: "effort_controllers/JointTrajectoryController"
+    joint: gripper_joint
+    goal_tolerance: 0.01
+    stalled_velocity_threshold: 0.01
+    stall_timeout: 0.2
     gains: 
       gripper_joint: {p: 2.5, i: 0.0, d: 0.05}
-      gripper2_joint: {p: 2.5, i: 0.0, d: 0.05}
 
 #---------------------------------version 2 ---------------------------------
 #   Publish all joint states -----------------------------------
